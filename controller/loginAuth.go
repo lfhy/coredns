@@ -34,6 +34,8 @@ func Login_get() func(*gin.Context) {
 }
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.Next()
+		return
 		//这一部分可以替换成从session/cookie中获取，
 		_, err := c.Request.Cookie(cookiename)
 		if err != nil {
