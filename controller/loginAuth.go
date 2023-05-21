@@ -1,43 +1,47 @@
 package controller
 
 import (
-	"net/http"
-	"github.com/gin-gonic/gin"
 	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
 	cookiename = "_u"
 )
 
-func Login_post() func(*gin.Context)  {
-	return func (c *gin.Context){
-		cookie := http.Cookie{Name:cookiename,Value:"ssdfsdf", MaxAge:50*60*60,Secure:false,HttpOnly:true,Domain:"localhost",Path:"localhost"}
-		http.SetCookie(c.Writer,&cookie)
-		c.Redirect(http.StatusMovedPermanently,"/admin/dns")
+func Login_post() func(*gin.Context) {
+	return func(c *gin.Context) {
+		cookie := http.Cookie{Name: cookiename, Value: "ssdfsdf", MaxAge: 50 * 60 * 60, Secure: false, HttpOnly: true, Domain: "localhost", Path: "localhost"}
+		http.SetCookie(c.Writer, &cookie)
+		c.Redirect(http.StatusMovedPermanently, "/admin/dns")
 	}
 }
 
-func Login_get() func(*gin.Context)  {
-	return func (c *gin.Context){
-		cookie,err :=c.Request.Cookie(cookiename)
-		if err ==nil{
-			cookie.MaxAge=-1
-			http.SetCookie(c.Writer,cookie)
+func Login_get() func(*gin.Context) {
+	return func(c *gin.Context) {
+		cookie, err := c.Request.Cookie(cookiename)
+		if err == nil {
+			cookie.MaxAge = -1
+			http.SetCookie(c.Writer, cookie)
 		}
 		fmt.Println("login--------------------")
-		c.HTML(http.StatusOK, "login.html",gin.H{
+		c.HTML(http.StatusOK, "login.html", gin.H{
 			"title": "Posts",
 		})
 	}
 }
-func AuthRequired() gin.HandlerFunc{
-	return func(c *gin.Context){
+func AuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		//这一部分可以替换成从session/cookie中获取，
-		_,err := c.Request.Cookie(cookiename)
-		if err != nil{
+		_, err := c.Request.Cookie(cookiename)
+		if err != nil {
 			fmt.Print(err)
-			c.Redirect(http.StatusMovedPermanently,"/login")
+			// c.Redirect(http.StatusMovedPermanently,"/login")
+			cookie := http.Cookie{Name: cookiename, Value: "ssdfsdf", MaxAge: 50 * 60 * 60, Secure: false, HttpOnly: true, Domain: "localhost", Path: "localhost"}
+			http.SetCookie(c.Writer, &cookie)
+			c.Redirect(http.StatusMovedPermanently, "/admin/dns")
 			return
 		}
 		c.Next()
