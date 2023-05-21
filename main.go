@@ -13,7 +13,7 @@
 
 package main
 
-import "mtime.com/corednsUI/cmd"
+import "dns/cmd"
 
 func main() {
 	cmd.Execute()
