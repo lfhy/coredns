@@ -4,7 +4,6 @@ import (
 	"dns/g"
 	"dns/util"
 	"encoding/json"
-	"regexp"
 
 	"github.com/coreos/etcd/client"
 
@@ -22,10 +21,6 @@ var (
 	EtcdDao = &etcddao{}
 )
 
-var (
-	reg, _ = regexp.Compile(`/x\d{1,}$`)
-)
-
 // 校验是否可以连接
 func OninitCheck() {
 	c, err := client.New(client.Config{
@@ -37,7 +32,7 @@ func OninitCheck() {
 		os.Exit(1)
 	}
 	kapi = client.NewKeysAPI(c)
-	_, err = kapi.Get(context.Background(), g.Etcd_path, &client.GetOptions{})
+	_, err = kapi.Get(context.Background(), g.DBKeyPath, &client.GetOptions{})
 	//fmt.Println(rep.Node.Value)
 	//_, err = kapi.Set(context.Background(),ippath, "0",&client.SetOptions{PrevExist:client.PrevExist,PrevValue:"0",Dir:false})
 	if err != nil {
@@ -113,7 +108,7 @@ func etcdGetmap(node *client.Node, mymap map[string]string) {
 	}
 }
 func etcdList() (map[string]string, error) {
-	node, err := etcdGet(g.Etcd_path)
+	node, err := etcdGet(g.DBKeyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +130,7 @@ func etcdAdd(key, value string) (bool, error) {
 	if !strings.HasPrefix(prekey, "/") {
 		prekey = "/" + prekey
 	}
-	key = g.Etcd_path + prekey
+	key = g.DBKeyPath + prekey
 	_, err := kapi.Set(context.Background(), key, value, &client.SetOptions{PrevExist: client.PrevNoExist, Dir: false})
 	if err != nil {
 		if e, ok := err.(client.Error); ok {
@@ -165,7 +160,7 @@ func etcdEdit(key, value string) error {
 }
 
 func WatchEtcd() {
-	watcher := kapi.Watcher(g.Etcd_path, &client.WatcherOptions{Recursive: true})
+	watcher := kapi.Watcher(g.DBKeyPath, &client.WatcherOptions{Recursive: true})
 	fmt.Println(122222)
 	for {
 		select {
@@ -193,7 +188,7 @@ func WatchEtcd() {
 
 func Etcdkey2Host(key, value string) *Dns {
 	temp := reg.ReplaceAllString(key, "")
-	temp = strings.Replace(temp, g.Etcd_path, "", 1)
+	temp = strings.Replace(temp, g.DBKeyPath, "", 1)
 	list := strings.Split(temp, "/")
 	util.Reverse(list)
 	aaa := A{}

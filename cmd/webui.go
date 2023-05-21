@@ -28,11 +28,11 @@ to quickly create a Cobra application.`,
 		if len(g.Etcd_url) == 0 {
 			os.Exit(1)
 		}
-		if g.Etcd_path == "" {
-			g.Etcd_path = "/skydns"
+		if g.DBKeyPath == "" {
+			g.DBKeyPath = "/skydns"
 		} else {
-			if !strings.HasPrefix(g.Etcd_path, "/") {
-				g.Etcd_path = "/" + g.Etcd_path
+			if !strings.HasPrefix(g.DBKeyPath, "/") {
+				g.DBKeyPath = "/" + g.DBKeyPath
 			}
 		}
 		//初始化检测etcd链接情况
@@ -47,5 +47,5 @@ to quickly create a Cobra application.`,
 func init() {
 	RootCmd.AddCommand(webuiCmd)
 	webuiCmd.Flags().StringSliceVar(&g.Etcd_url, "etcdurl", nil, "etcd url not empty")
-	webuiCmd.Flags().StringVar(&g.Etcd_path, "etcdpath", "", "etcd url not empty")
+	webuiCmd.Flags().StringVar(&g.DBKeyPath, "etcdpath", "", "etcd url not empty")
 }
