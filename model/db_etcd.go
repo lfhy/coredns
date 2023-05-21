@@ -42,7 +42,7 @@ func OninitCheck() {
 type etcddao struct {
 }
 
-func (this *etcddao) DnsList() []*Dns {
+func (e *etcddao) DnsList() []*Dns {
 	result, found := config.Mycache.Get(config.Cache_Name)
 	if found {
 		return result.([]*Dns)
@@ -70,17 +70,17 @@ func etcdALL() []*Dns {
 	config.Mycache.Set(config.Cache_Name, result, cache.DefaultExpiration)
 	return result
 }
-func (this *etcddao) DnsAdd(key, value string) (bool, error) {
+func (e *etcddao) DnsAdd(key, value string) (bool, error) {
 	return etcdAdd(key, value)
 }
-func (this *etcddao) DnsDel(key string) error {
+func (e *etcddao) DnsDel(key string) error {
 	return etcdDel(key)
 }
-func (this *etcddao) DnsEdit(key, value string) error {
+func (e *etcddao) DnsEdit(key, value string) error {
 	return etcdEdit(key, value)
 }
 
-func (this *etcddao) DnsGet(key string) (*Dns, error) {
+func (e *etcddao) DnsGet(key string) (*Dns, error) {
 	resp, err := etcdGet(key)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (this *etcddao) DnsGet(key string) (*Dns, error) {
 	for _, kv := range resp.Kvs {
 		return Etcdkey2Host(key, string(kv.Value)), nil
 	}
-	return nil, fmt.Errorf("Not Found")
+	return nil, nil
 }
 
 // 获取KV Map
