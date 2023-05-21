@@ -5,7 +5,7 @@ import (
 	"dns/util"
 	"encoding/json"
 
-	"github.com/coreos/etcd/client"
+	client "go.etcd.io/etcd/client/v3"
 
 	//"dns/controller"
 	"context"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	kapi    client.KeysAPI
+	kapi    client.KV
 	EtcdDao = &etcddao{}
 )
 
@@ -25,14 +25,13 @@ var (
 func OninitCheck() {
 	c, err := client.New(client.Config{
 		Endpoints: config.Etcd_url,
-		Transport: client.DefaultTransport,
 	})
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
-	kapi = client.NewKeysAPI(c)
-	_, err = kapi.Get(context.Background(), config.DBKeyPath, &client.GetOptions{})
+	kapi = client.NewKV(c)
+	_, err = kapi.Get(context.Background(), config.DBKeyPath, nil)
 	//fmt.Println(rep.Node.Value)
 	//_, err = kapi.Set(context.Background(),ippath, "0",&client.SetOptions{PrevExist:client.PrevExist,PrevValue:"0",Dir:false})
 	if err != nil {
@@ -49,7 +48,6 @@ func (this *etcddao) DnsList() []*Dns {
 	if found {
 		return result.([]*Dns)
 	} else {
-		fmt.Println(33300000)
 		mymap, err := etcdList()
 		if err != nil {
 			return nil
@@ -82,31 +80,25 @@ func (this *etcddao) DnsDel(key string) error {
 func (this *etcddao) DnsEdit(key, value string) error {
 	return etcdEdit(key, value)
 }
+
 func (this *etcddao) DnsGet(key string) (*Dns, error) {
-	node, err := etcdGet(key)
+	resp, err := etcdGet(key)
 	if err != nil {
 		return nil, err
 	}
-	return Etcdkey2Host(node.Key, node.Value), nil
+	for _, kv := range resp.Kvs {
+		return Etcdkey2Host(key, string(kv.Value)), nil
+	}
+	return nil, fmt.Errorf("Not Found")
 }
 
-func etcdGetmap(node *client.Node, mymap map[string]string) {
-	if node.Dir {
-		for _, x := range node.Nodes {
-			if x.Dir {
-				resp, err := kapi.Get(context.Background(), x.Key, &client.GetOptions{})
-				if err != nil {
-					continue
-				}
-				etcdGetmap(resp.Node, mymap)
-			} else {
-				mymap[x.Key] = x.Value
-			}
-		}
-	} else {
-		mymap[node.Key] = node.Value
+// 获取KV Map
+func etcdGetmap(resp *client.GetResponse, mymap map[string]string) {
+	for _, kv := range resp.Kvs {
+		mymap[string(kv.Key)] = string(kv.Value)
 	}
 }
+
 func etcdList() (map[string]string, error) {
 	node, err := etcdGet(config.DBKeyPath)
 	if err != nil {
@@ -116,13 +108,12 @@ func etcdList() (map[string]string, error) {
 	etcdGetmap(node, result)
 	return result, nil
 }
-func etcdGet(key string) (*client.Node, error) {
-	resp, err := kapi.Get(context.Background(), key, &client.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return resp.Node, nil
+
+// 获取Key的返回
+func etcdGet(key string) (*client.GetResponse, error) {
+	return kapi.Get(context.Background(), key, nil)
 }
+
 func etcdAdd(key, value string) (bool, error) {
 	keylist := strings.Split(key, ".")
 	util.Reverse(keylist)
@@ -131,20 +122,15 @@ func etcdAdd(key, value string) (bool, error) {
 		prekey = "/" + prekey
 	}
 	key = config.DBKeyPath + prekey
-	_, err := kapi.Set(context.Background(), key, value, &client.SetOptions{PrevExist: client.PrevNoExist, Dir: false})
+	_, err := kapi.Put(context.Background(), key, value, nil)
 	if err != nil {
-		if e, ok := err.(client.Error); ok {
-			if e.Code == client.ErrorCodeNodeExist {
-				return false, fmt.Errorf("数据已经存在！")
-			}
-		}
 		return false, err
 	}
 	return true, nil
 }
 func etcdDel(key string) error {
 	fmt.Println(key)
-	_, err := kapi.Delete(context.Background(), key, &client.DeleteOptions{Recursive: true})
+	_, err := kapi.Delete(context.Background(), key, nil)
 	if err != nil {
 		fmt.Println(key, err)
 		return err
@@ -152,7 +138,7 @@ func etcdDel(key string) error {
 	return nil
 }
 func etcdEdit(key, value string) error {
-	_, err := kapi.Set(context.Background(), key, value, &client.SetOptions{PrevExist: client.PrevExist, Dir: false})
+	_, err := kapi.Put(context.Background(), key, value, nil)
 	if err != nil {
 		return err
 	}
@@ -160,30 +146,32 @@ func etcdEdit(key, value string) error {
 }
 
 func WatchEtcd() {
-	watcher := kapi.Watcher(config.DBKeyPath, &client.WatcherOptions{Recursive: true})
-	fmt.Println(122222)
-	for {
-		select {
-		case <-config.Exit:
-			break
-		default:
+	// TODO: 下次调
+	fmt.Println("不支持的功能")
+	// watcher := kapi.Watcher(config.DBKeyPath, &client.WatcherOptions{Recursive: true})
+	// fmt.Println(122222)
+	// for {
+	// 	select {
+	// 	case <-config.Exit:
+	// 		break
+	// 	default:
 
-		}
-		res, err := watcher.Next(context.Background())
-		if err != nil {
-			continue
-		}
-		if res.Action == "expire" {
-			continue
-		} else if res.Action == "set" || res.Action == "update" || res.Action == "create" || res.Action == "delete" {
-			fmt.Println(res.Action)
-			result := etcdALL()
-			if result != nil {
-				NewMessage <- result
-			}
-		}
+	// 	}
+	// 	res, err := watcher.Next(context.Background())
+	// 	if err != nil {
+	// 		continue
+	// 	}
+	// 	if res.Action == "expire" {
+	// 		continue
+	// 	} else if res.Action == "set" || res.Action == "update" || res.Action == "create" || res.Action == "delete" {
+	// 		fmt.Println(res.Action)
+	// 		result := etcdALL()
+	// 		if result != nil {
+	// 			NewMessage <- result
+	// 		}
+	// 	}
 
-	}
+	// }
 }
 
 func Etcdkey2Host(key, value string) *Dns {
