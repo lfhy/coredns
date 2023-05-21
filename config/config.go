@@ -1,4 +1,4 @@
-package g
+package config
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 
 var (
 	Etcd_url   = make([]string, 0)
-	DBKeyPath  = "/skydns"
+	DBKeyPath  = "/coredns"
 	Exit       = make(chan struct{}, 1)
 	Mycache    = cache.New(60*time.Minute, 60*time.Minute)
 	Cache_Name = "dns"
