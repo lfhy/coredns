@@ -23,7 +23,8 @@ var (
 
 // 校验是否可以连接
 func OninitCheck() {
-	kapi, err := client.New(client.Config{
+	var err error
+	kapi, err = client.New(client.Config{
 		Endpoints: config.Etcd_url,
 	})
 	if err != nil {
@@ -145,7 +146,6 @@ func etcdEdit(key, value string) error {
 }
 
 func WatchEtcd() {
-
 	watcher := kapi.Watch(context.Background(), config.DBKeyPath)
 	for wresp := range watcher {
 		select {
