@@ -17,20 +17,19 @@ import (
 )
 
 var (
-	kapi    client.KV
+	kapi    *client.Client
 	EtcdDao = &etcddao{}
 )
 
 // 校验是否可以连接
 func OninitCheck() {
-	c, err := client.New(client.Config{
+	kapi, err := client.New(client.Config{
 		Endpoints: config.Etcd_url,
 	})
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
-	kapi = client.NewKV(c)
 	_, err = kapi.Get(context.Background(), config.DBKeyPath, nil)
 	//fmt.Println(rep.Node.Value)
 	//_, err = kapi.Set(context.Background(),ippath, "0",&client.SetOptions{PrevExist:client.PrevExist,PrevValue:"0",Dir:false})
