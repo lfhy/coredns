@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StartHttp() {
+func StartHttp(port string) {
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.LoadHTMLGlob("views/*")
-	r.Static("/static", "D:\\project\\go\\src\\dns\\corednsUI\\static")
+	r.Static("/static", "./static")
 	admin := r.Group("admin")
 	admin.Use(controller.AuthRequired())
 	{
@@ -32,5 +32,5 @@ func StartHttp() {
 	r.GET("", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/admin/dns")
 	})
-	r.Run(":9191")
+	r.Run(":" + port)
 }

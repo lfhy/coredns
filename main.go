@@ -1,20 +1,45 @@
-// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
-import "dns/cmd"
+import (
+	"dns/config"
+	"dns/controller"
+	"dns/httpGin"
+	"dns/model"
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+)
+
+var etcdUrl = flag.String("etcd.url", "http://127.0.0.1:2379", "ETCD数据库的连接地址")
+var etcdPath = flag.String("etcd.path", "/coredns", "ETCD数据库存储路径的前缀")
+var port = flag.Int("port", 9101, "Web服务监听的端口")
 
 func main() {
-	cmd.Execute()
+	flag.Parse()
+
+	// 解析链接
+	config.Etcd_url = append(config.Etcd_url, strings.Split(*etcdUrl, ",")...)
+
+	if len(config.Etcd_url) == 0 {
+		fmt.Println("地址不存在")
+		os.Exit(1)
+	}
+	config.DBKeyPath = *etcdPath
+	if config.DBKeyPath == "" {
+		config.DBKeyPath = "/coredns"
+	} else {
+		// 判断根是否存在
+		if !strings.HasPrefix(config.DBKeyPath, "/") {
+			config.DBKeyPath = "/" + config.DBKeyPath
+		}
+	}
+	//初始化检测etcd链接情况
+	model.OninitCheck()
+
+	// 链接后监听数据库变化
+	controller.Oninit()
+
+	// 启动Http服务
+	httpGin.StartHttp(fmt.Sprint(*port))
 }

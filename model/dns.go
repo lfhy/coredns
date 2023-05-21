@@ -1,5 +1,7 @@
 package model
 
+import "regexp"
+
 type Dns struct {
 	Origin     string
 	NameServer string
@@ -23,3 +25,7 @@ type Message struct {
 
 // DNS操作消息
 var NewMessage = make(chan []*Dns, 1)
+
+var (
+	reg, _ = regexp.Compile(`/x\d{1,}$`)
+)
