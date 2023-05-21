@@ -42,7 +42,7 @@ func AuthRequired() gin.HandlerFunc {
 			cookie := http.Cookie{Name: cookiename, Value: "ssdfsdf", MaxAge: 50 * 60 * 60, Secure: false, HttpOnly: true, Domain: "localhost", Path: "localhost"}
 			http.SetCookie(c.Writer, &cookie)
 			c.Redirect(http.StatusMovedPermanently, "/admin/dns")
-			return
+			// return
 		}
 		c.Next()
 		//username:=c.Query("username")
