@@ -30,7 +30,7 @@ func OninitCheck() {
 		fmt.Print(err)
 		os.Exit(1)
 	}
-	_, err = kapi.Get(context.Background(), config.DBKeyPath, nil)
+	_, err = kapi.Get(context.Background(), config.DBKeyPath)
 	//fmt.Println(rep.Node.Value)
 	//_, err = kapi.Set(context.Background(),ippath, "0",&client.SetOptions{PrevExist:client.PrevExist,PrevValue:"0",Dir:false})
 	if err != nil {
@@ -110,7 +110,7 @@ func etcdList() (map[string]string, error) {
 
 // 获取Key的返回
 func etcdGet(key string) (*client.GetResponse, error) {
-	return kapi.Get(context.Background(), key, nil)
+	return kapi.Get(context.Background(), key)
 }
 
 func etcdAdd(key, value string) (bool, error) {
@@ -121,7 +121,7 @@ func etcdAdd(key, value string) (bool, error) {
 		prekey = "/" + prekey
 	}
 	key = config.DBKeyPath + prekey
-	_, err := kapi.Put(context.Background(), key, value, nil)
+	_, err := kapi.Put(context.Background(), key, value)
 	if err != nil {
 		return false, err
 	}
@@ -129,7 +129,7 @@ func etcdAdd(key, value string) (bool, error) {
 }
 func etcdDel(key string) error {
 	fmt.Println(key)
-	_, err := kapi.Delete(context.Background(), key, nil)
+	_, err := kapi.Delete(context.Background(), key)
 	if err != nil {
 		fmt.Println(key, err)
 		return err
@@ -137,7 +137,7 @@ func etcdDel(key string) error {
 	return nil
 }
 func etcdEdit(key, value string) error {
-	_, err := kapi.Put(context.Background(), key, value, nil)
+	_, err := kapi.Put(context.Background(), key, value)
 	if err != nil {
 		return err
 	}
