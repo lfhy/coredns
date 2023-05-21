@@ -12,3 +12,5 @@
 *.dll
 *.so
 *.dylib
+
+go.mod
