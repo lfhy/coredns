@@ -1,8 +1,10 @@
-package util
+package model
 
 import (
 	"dns/g"
-	"dns/model"
+	"dns/util"
+	"encoding/json"
+	"regexp"
 
 	"github.com/coreos/etcd/client"
 
@@ -16,11 +18,15 @@ import (
 )
 
 var (
-	kapi       client.KeysAPI
-	EtcdDao    = &etcddao{}
-	NewMessage = make(chan []*model.Dns, 1)
+	kapi    client.KeysAPI
+	EtcdDao = &etcddao{}
 )
 
+var (
+	reg, _ = regexp.Compile(`/x\d{1,}$`)
+)
+
+// 校验是否可以连接
 func OninitCheck() {
 	c, err := client.New(client.Config{
 		Endpoints: g.Etcd_url,
@@ -43,29 +49,29 @@ func OninitCheck() {
 type etcddao struct {
 }
 
-func (this *etcddao) DnsList() []*model.Dns {
+func (this *etcddao) DnsList() []*Dns {
 	result, found := g.Mycache.Get(g.Cache_Name)
 	if found {
-		return result.([]*model.Dns)
+		return result.([]*Dns)
 	} else {
 		fmt.Println(33300000)
 		mymap, err := etcdList()
 		if err != nil {
 			return nil
 		}
-		result := make([]*model.Dns, 0, len(mymap))
+		result := make([]*Dns, 0, len(mymap))
 		for k, v := range mymap {
 			result = append(result, Etcdkey2Host(k, v))
 		}
 		return result
 	}
 }
-func etcdALL() []*model.Dns {
+func etcdALL() []*Dns {
 	mymap, err := etcdList()
 	if err != nil {
 		return nil
 	}
-	result := make([]*model.Dns, 0, len(mymap))
+	result := make([]*Dns, 0, len(mymap))
 	for k, v := range mymap {
 		result = append(result, Etcdkey2Host(k, v))
 	}
@@ -81,7 +87,7 @@ func (this *etcddao) DnsDel(key string) error {
 func (this *etcddao) DnsEdit(key, value string) error {
 	return etcdEdit(key, value)
 }
-func (this *etcddao) DnsGet(key string) (*model.Dns, error) {
+func (this *etcddao) DnsGet(key string) (*Dns, error) {
 	node, err := etcdGet(key)
 	if err != nil {
 		return nil, err
@@ -124,7 +130,7 @@ func etcdGet(key string) (*client.Node, error) {
 }
 func etcdAdd(key, value string) (bool, error) {
 	keylist := strings.Split(key, ".")
-	Reverse(keylist)
+	util.Reverse(keylist)
 	prekey := strings.Join(keylist, "/")
 	if !strings.HasPrefix(prekey, "/") {
 		prekey = "/" + prekey
@@ -183,4 +189,14 @@ func WatchEtcd() {
 		}
 
 	}
+}
+
+func Etcdkey2Host(key, value string) *Dns {
+	temp := reg.ReplaceAllString(key, "")
+	temp = strings.Replace(temp, g.Etcd_path, "", 1)
+	list := strings.Split(temp, "/")
+	util.Reverse(list)
+	aaa := A{}
+	json.Unmarshal([]byte(value), &aaa)
+	return &Dns{Origin: strings.Join(list, "."), NameServer: aaa.Host, TTL: aaa.TTL, Key: key, Value: value}
 }

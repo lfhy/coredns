@@ -2,7 +2,6 @@ package controller
 
 import (
 	"dns/model"
-	"dns/util"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 )
 
 func Oninit() {
-	go util.WatchEtcd()
+	go model.WatchDBUpdate()
 }
 
 func DnsEditGet() func(*gin.Context) {
@@ -23,7 +22,7 @@ func DnsEditGet() func(*gin.Context) {
 		if key == "" {
 			c.HTML(http.StatusOK, "dnsedit.html", gin.H{})
 		} else {
-			obj, err := util.EtcdDao.DnsGet(key)
+			obj, err := model.DnsGet(key)
 			if err != nil {
 				c.HTML(http.StatusOK, "dnsedit.html", gin.H{"Message": model.Message{Error: err.Error()}})
 			} else {
@@ -50,12 +49,11 @@ func DnsEditPost() func(*gin.Context) {
 			value, _ = json.Marshal(model.A{Host: data, TTL: intTTL})
 		}
 		if key == "" {
-			util.EtcdDao.DnsAdd(name, string(value))
+			model.DnsAdd(name, string(value))
 		} else {
-			util.EtcdDao.DnsEdit(key, string(value))
+			model.DnsEdit(key, string(value))
 		}
 		c.Redirect(http.StatusMovedPermanently, "/admin/dns")
-		return
 	}
 }
 
@@ -90,7 +88,7 @@ func WsHandler() func(context *gin.Context) {
 			defer conn.Close()
 			for {
 				select {
-				case message, ok := <-util.NewMessage:
+				case message, ok := <-model.NewMessage:
 					if !ok {
 						conn.WriteMessage(websocket.CloseMessage, []byte{})
 					}
@@ -98,7 +96,7 @@ func WsHandler() func(context *gin.Context) {
 					err := conn.WriteJSON(message)
 					if err != nil {
 						fmt.Println(err)
-						util.NewMessage <- message
+						model.NewMessage <- message
 						break
 					}
 				}
@@ -110,7 +108,7 @@ func WsHandler() func(context *gin.Context) {
 func DelDns() func(*gin.Context) {
 	return func(c *gin.Context) {
 		key := c.Query("key")
-		err := util.EtcdDao.DnsDel(key)
+		err := model.DnsDel(key)
 		if err != nil {
 			c.JSON(http.StatusOK, model.Message{Error: err.Error()})
 			return
@@ -125,6 +123,6 @@ func DelDns() func(*gin.Context) {
 // api 接口
 func DnsApiList() func(*gin.Context) {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, model.DnsData{Data: util.EtcdDao.DnsList()})
+		c.JSON(http.StatusOK, model.DnsData{Data: model.DnsList()})
 	}
 }
