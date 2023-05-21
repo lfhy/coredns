@@ -2,8 +2,6 @@ module dns
 
 go 1.19
 
-replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
-
 require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/gorilla/websocket v1.5.0
