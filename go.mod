@@ -4,7 +4,7 @@ go 1.19
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
-replace github.com/coreos/etcd/client => go.etcd.io/etcd/client/v3 v3.5.0-pre
+replace github.com/coreos/etcd/client => go.etcd.io/etcd/client/v3 v3.5.9
 
 require (
 	github.com/coreos/etcd v3.3.27+incompatible
