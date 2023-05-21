@@ -145,32 +145,28 @@ func etcdEdit(key, value string) error {
 }
 
 func WatchEtcd() {
-	// TODO: 下次调
-	fmt.Println("不支持的功能")
-	// watcher := kapi.Watcher(config.DBKeyPath, &client.WatcherOptions{Recursive: true})
-	// fmt.Println(122222)
-	// for {
-	// 	select {
-	// 	case <-config.Exit:
-	// 		break
-	// 	default:
 
-	// 	}
-	// 	res, err := watcher.Next(context.Background())
-	// 	if err != nil {
-	// 		continue
-	// 	}
-	// 	if res.Action == "expire" {
-	// 		continue
-	// 	} else if res.Action == "set" || res.Action == "update" || res.Action == "create" || res.Action == "delete" {
-	// 		fmt.Println(res.Action)
-	// 		result := etcdALL()
-	// 		if result != nil {
-	// 			NewMessage <- result
-	// 		}
-	// 	}
+	watcher := kapi.Watch(context.Background(), config.DBKeyPath)
+	for wresp := range watcher {
+		select {
+		case <-config.Exit:
+			return
+		default:
+			for _, ev := range wresp.Events {
+				fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
 
-	// }
+				if ev.Type.String() == "expire" {
+					continue
+				} else if ev.Type.String() == "set" || ev.Type.String() == "update" || ev.Type.String() == "create" || ev.Type.String() == "delete" {
+					result := etcdALL()
+					if result != nil {
+						NewMessage <- result
+					}
+				}
+			}
+		}
+
+	}
 }
 
 func Etcdkey2Host(key, value string) *Dns {
