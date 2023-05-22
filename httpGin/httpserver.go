@@ -2,7 +2,10 @@ package httpGin
 
 import (
 	"dns/controller"
+	dhtml "dns/html"
+	"dns/resource"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,8 +13,10 @@ import (
 func StartHttp(port string) {
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.LoadHTMLGlob("views/*")
-	r.Static("/static", "./static")
+	dhtml.WriteHTMLTemplate()
+	r.LoadHTMLGlob(os.TempDir() + "/views/*")
+	// os.RemoveAll(os.TempDir() + "/views")
+	r.StaticFS("/static", resource.GetStaticFS())
 	admin := r.Group("admin")
 	admin.Use(controller.AuthRequired())
 	{
